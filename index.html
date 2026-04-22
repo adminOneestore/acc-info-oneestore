@@ -54,8 +54,6 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 .btn-edit{background:transparent;color:var(--muted);}
 .btn-harga{background:#1a2840;color:#60a5fa;border-color:#1e3a5f;}
 .btn-flag{background:#3d1a1a;color:#ff6b6b;border-color:#5f1e1e;}
-.btn-deal{background:#2a1a40;color:#c084fc;border-color:#4a2a6f;}
-.btn-deal.active-deal{background:#4a2a6f;color:#fff;}
 .empty{text-align:center;padding:40px 20px;color:var(--muted);font-size:14px;}
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;display:flex;align-items:flex-end;}
 .modal{background:var(--surface);border-radius:20px 20px 0 0;padding:20px;width:100%;max-height:85vh;overflow-y:auto;}
@@ -63,12 +61,9 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 .modal-close{float:right;background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;}
 .form-group{margin-bottom:14px;}
 .form-group label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px;}
-.form-group input,.form-group textarea,.form-group select{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;font-family:inherit;padding:10px 12px;}
+.form-group input,.form-group textarea{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;font-family:inherit;padding:10px 12px;}
 .form-group textarea{min-height:80px;resize:none;}
 .btn-submit{width:100%;background:var(--green);color:#0f0f0f;font-size:14px;font-weight:700;padding:12px;border-radius:10px;border:none;cursor:pointer;margin-top:8px;}
-.deal-buttons{display:flex;gap:8px;margin-top:6px;}
-.deal-btn{flex:1;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;}
-.deal-btn.selected{background:#4a2a6f;color:#c084fc;border-color:#c084fc;}
 .fab{position:fixed;bottom:24px;right:20px;width:52px;height:52px;background:var(--green);border-radius:50%;border:none;font-size:24px;cursor:pointer;color:#0f0f0f;font-weight:700;box-shadow:0 4px 20px rgba(127,255,106,0.3);}
 .hidden{display:none;}
 .loading-text{text-align:center;padding:30px;color:var(--muted);}
@@ -172,54 +167,32 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
     <button class="modal-close" onclick="closeDealModal()">×</button>
     <div class="modal-title">💰 Siapa yang Deal?</div>
     <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">
-      <button class="btn" style="background:#1a2840;color:#60a5fa;padding:14px;font-size:14px;" onclick="submitDeal('ONEE')">👑 ONEE</button>
+      <button class="btn" style="background:#1a2e18;color:#7fff6a;padding:14px;font-size:14px;" onclick="submitDeal('ONEE')">👑 ONEE</button>
       <button class="btn" style="background:#1a2840;color:#60a5fa;padding:14px;font-size:14px;" onclick="submitDeal('DEKWAN')">🤝 DEKWAN</button>
     </div>
   </div>
 </div>
 
 <script>
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxgiKYv91MVY7OzevnrEJxjEeK--DCefdPvTtXCwN3nUXzySkcWq1hmHNguxhLLPkZc/exec';
+
 let allData = [];
 let currentTab = 'CHECKING';
 let editingRow = null;
 let movingRow = null;
 let hargaRow = null;
 
-function callApi(params) {
-  return new Promise((resolve) => {
-    const action = params.action;
-    if (action === 'getAll') {
-      google.script.run
-        .withSuccessHandler(resolve)
-        .withFailureHandler(e => resolve({success:false,error:e.message}))
-        .getAllData();
-    } else if (action === 'addAcc') {
-      google.script.run
-        .withSuccessHandler(resolve)
-        .withFailureHandler(e => resolve({success:false,error:e.message}))
-        .addAccData(params.data);
-    } else if (action === 'updateAcc') {
-      google.script.run
-        .withSuccessHandler(resolve)
-        .withFailureHandler(e => resolve({success:false,error:e.message}))
-        .updateAccData(params.row, params.data);
-    } else if (action === 'moveStatus') {
-      google.script.run
-        .withSuccessHandler(resolve)
-        .withFailureHandler(e => resolve({success:false,error:e.message}))
-        .moveStatusData(params.row, params.status);
-    } else if (action === 'setHargaJual') {
-      google.script.run
-        .withSuccessHandler(resolve)
-        .withFailureHandler(e => resolve({success:false,error:e.message}))
-        .setHargaJualData(params.row, params.harga, params.adminPass);
-    } else if (action === 'setAdminDeal') {
-      google.script.run
-        .withSuccessHandler(resolve)
-        .withFailureHandler(e => resolve({success:false,error:e.message}))
-        .setAdminDealData(params.row, params.admin);
-    }
-  });
+async function callApi(params) {
+  try {
+    const response = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify(params)
+    });
+    const data = await response.json();
+    return data;
+  } catch(e) {
+    return { success: false, error: e.message };
+  }
 }
 
 async function loadData() {
@@ -230,7 +203,7 @@ async function loadData() {
     renderStats();
     renderCards();
   } else {
-    document.getElementById('cardsContainer').innerHTML = '<div class="empty">Error loading data. Cuba refresh.</div>';
+    document.getElementById('cardsContainer').innerHTML = '<div class="empty">Error loading. Cuba refresh.</div>';
   }
 }
 
@@ -396,10 +369,8 @@ function closeDealModal() {
 
 async function submitDeal(admin) {
   closeDealModal();
-  // Move to SOLD dulu
   const res1 = await callApi({action:'moveStatus', row:movingRow, status:'SOLD'});
   if (res1 && res1.success) {
-    // Set admin deal
     await callApi({action:'setAdminDeal', row:movingRow, admin});
     loadData();
   } else {

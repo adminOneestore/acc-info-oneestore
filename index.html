@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Acc Info | Oneestore</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0f0f0f;--surface:#1a1a1a;--surface2:#242424;
+  --border:#2e2e2e;--text:#f0f0f0;--muted:#888;
+  --green:#7fff6a;--green-dim:#3d6635;
+  --red:#ff6b6b;--amber:#ffc107;--blue:#60a5fa;
+}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;padding-bottom:80px;}
+.header{padding:16px 16px 0;display:flex;align-items:center;gap:10px;}
+.logo{width:36px;height:36px;background:var(--green);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;}
+.header-text h1{font-size:16px;font-weight:600;}
+.header-text p{font-size:12px;color:var(--muted);}
+.tabs{display:flex;gap:6px;padding:14px 16px 0;overflow-x:auto;scrollbar-width:none;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{flex-shrink:0;font-size:12px;font-weight:600;padding:6px 14px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;}
+.tab.active{color:#0f0f0f;}
+.tab[data-status="CHECKING"].active{background:#ffc107;border-color:#ffc107;}
+.tab[data-status="EDITING"].active{background:#f97316;border-color:#f97316;}
+.tab[data-status="LISTED"].active{background:#7fff6a;border-color:#7fff6a;}
+.tab[data-status="SOLD"].active{background:#60a5fa;border-color:#60a5fa;}
+.tab[data-status="FLAGGED"].active{background:#ff6b6b;border-color:#ff6b6b;}
+.stats-bar{display:flex;gap:8px;padding:12px 16px;overflow-x:auto;scrollbar-width:none;}
+.stat-chip{flex-shrink:0;font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;background:var(--surface2);border:1px solid var(--border);color:var(--muted);}
+.stat-chip b{color:var(--green);}
+.cards{padding:0 16px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px;}
+.card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
+.card-email{font-size:13px;font-weight:600;color:var(--green);word-break:break-all;}
+.card-pass{font-size:11px;color:var(--muted);margin-top:2px;}
+.status-badge{flex-shrink:0;font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;margin-left:8px;}
+.badge-CHECKING{background:#3d2f00;color:#ffc107;}
+.badge-EDITING{background:#3d1f00;color:#f97316;}
+.badge-LISTED{background:#1a2e18;color:#7fff6a;}
+.badge-SOLD{background:#1a2840;color:#60a5fa;}
+.badge-FLAGGED{background:#3d1a1a;color:#ff6b6b;}
+.card-players{font-size:12px;color:var(--text);line-height:1.7;margin-bottom:10px;background:var(--surface2);padding:10px;border-radius:8px;}
+.card-meta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+.meta-chip{font-size:11px;padding:3px 8px;border-radius:6px;background:var(--surface2);color:var(--muted);}
+.meta-chip b{color:var(--text);}
+.meta-chip.profit-pos b{color:#7fff6a;}
+.meta-chip.profit-neg b{color:#ff6b6b;}
+.card-nota{font-size:12px;color:var(--amber);background:#2a2500;padding:8px;border-radius:8px;margin-bottom:10px;}
+.card-actions{display:flex;gap:6px;flex-wrap:wrap;}
+.btn{font-size:12px;font-weight:600;padding:7px 12px;border-radius:8px;border:1px solid var(--border);cursor:pointer;font-family:inherit;}
+.btn:active{transform:scale(0.97);}
+.btn-move{background:var(--surface2);color:var(--text);}
+.btn-edit{background:transparent;color:var(--muted);}
+.btn-harga{background:#1a2840;color:#60a5fa;border-color:#1e3a5f;}
+.btn-flag{background:#3d1a1a;color:#ff6b6b;border-color:#5f1e1e;}
+.empty{text-align:center;padding:40px 20px;color:var(--muted);font-size:14px;}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;display:flex;align-items:flex-end;}
+.modal{background:var(--surface);border-radius:20px 20px 0 0;padding:20px;width:100%;max-height:85vh;overflow-y:auto;}
+.modal-title{font-size:16px;font-weight:600;margin-bottom:16px;}
+.modal-close{float:right;background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;}
+.form-group{margin-bottom:14px;}
+.form-group label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px;}
+.form-group input,.form-group textarea{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;font-family:inherit;padding:10px 12px;}
+.form-group textarea{min-height:80px;resize:none;}
+.btn-submit{width:100%;background:var(--green);color:#0f0f0f;font-size:14px;font-weight:700;padding:12px;border-radius:10px;border:none;cursor:pointer;margin-top:8px;}
+.fab{position:fixed;bottom:24px;right:20px;width:52px;height:52px;background:var(--green);border-radius:50%;border:none;font-size:24px;cursor:pointer;color:#0f0f0f;font-weight:700;box-shadow:0 4px 20px rgba(127,255,106,0.3);}
+.hidden{display:none;}
+.loading-text{text-align:center;padding:30px;color:var(--muted);}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">⚡</div>
+  <div class="header-text">
+    <h1>Acc Info</h1>
+    <p>oneestore.efootball</p>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" data-status="CHECKING" onclick="switchTab('CHECKING')">🎃 CHECKING</button>
+  <button class="tab" data-status="EDITING" onclick="switchTab('EDITING')">🔥 EDITING</button>
+  <button class="tab" data-status="LISTED" onclick="switchTab('LISTED')">✨ LISTED</button>
+  <button class="tab" data-status="SOLD" onclick="switchTab('SOLD')">💰 SOLD</button>
+  <button class="tab" data-status="FLAGGED" onclick="switchTab('FLAGGED')">🚩 FLAGGED</button>
+</div>
+
+<div class="stats-bar" id="statsBar"></div>
+<div class="cards" id="cardsContainer"><div class="loading-text">Loading...</div></div>
+
+<button class="fab" onclick="openAddModal()">+</button>
+
+<!-- Modal Tambah/Edit -->
+<div class="modal-overlay hidden" id="modalOverlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div class="modal-title" id="modalTitle">Tambah Acc</div>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="text" id="fEmail" placeholder="xxx@instaddr.com"/>
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="text" id="fPass" value="mahal12345"/>
+    </div>
+    <div class="form-group">
+      <label>Player List</label>
+      <textarea id="fPlayers" placeholder="SHWTIME MESSI&#10;NEW EPIC HAZARD&#10;MANAGER AMORIM"></textarea>
+    </div>
+    <div class="form-group">
+      <label>Harga Beli (RM)</label>
+      <input type="number" id="fHargaBeli" placeholder="0"/>
+    </div>
+    <div class="form-group">
+      <label>Seller</label>
+      <input type="text" id="fSeller" placeholder="Nama seller"/>
+    </div>
+    <div class="form-group">
+      <label>Worker</label>
+      <input type="text" id="fWorker" placeholder="Nama worker"/>
+    </div>
+    <div class="form-group">
+      <label>Nota</label>
+      <textarea id="fNota" placeholder="Nota tambahan..."></textarea>
+    </div>
+    <button class="btn-submit" id="submitBtn" onclick="submitAcc()">Simpan</button>
+  </div>
+</div>
+
+<!-- Modal Harga Jual -->
+<div class="modal-overlay hidden" id="hargaModalOverlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeHargaModal()">×</button>
+    <div class="modal-title">Set Harga Jual (Admin)</div>
+    <div class="form-group">
+      <label>Harga Jual (RM)</label>
+      <input type="number" id="fHargaJual" placeholder="0"/>
+    </div>
+    <div class="form-group">
+      <label>Password Admin</label>
+      <input type="password" id="fAdminPass" placeholder="Password admin"/>
+    </div>
+    <button class="btn-submit" onclick="submitHargaJual()">Set Harga</button>
+  </div>
+</div>
+
+<!-- Modal Move -->
+<div class="modal-overlay hidden" id="moveModalOverlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeMoveModal()">×</button>
+    <div class="modal-title">Move Acc ke Stage</div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">
+      <button class="btn" style="background:#3d2f00;color:#ffc107;padding:12px;" onclick="confirmMove('CHECKING')">🎃 CHECKING</button>
+      <button class="btn" style="background:#3d1f00;color:#f97316;padding:12px;" onclick="confirmMove('EDITING')">🔥 EDITING</button>
+      <button class="btn" style="background:#1a2e18;color:#7fff6a;padding:12px;" onclick="confirmMove('LISTED')">✨ LISTED</button>
+      <button class="btn" style="background:#1a2840;color:#60a5fa;padding:12px;" onclick="confirmMove('SOLD')">💰 SOLD</button>
+      <button class="btn" style="background:#3d1a1a;color:#ff6b6b;padding:12px;" onclick="confirmMove('FLAGGED')">🚩 FLAGGED</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzDeBi46ir4E3fUnaIFvkel2UA99dyMNQTwWgQ_ylGTAJkfCSg6EJ6s7GUzGNW13ltv/exec';
+
+let allData = [];
+let currentTab = 'CHECKING';
+let editingRow = null;
+let movingRow = null;
+let hargaRow = null;
+
+async function callApi(params) {
+  try {
+    const url = APPS_SCRIPT_URL + '?callback=cb_' + Date.now();
+    const response = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify(params)
+    });
+    const data = await response.json();
+    return data;
+  } catch(e) {
+    return { success: false, error: e.message };
+  }
+}
+
+async function loadData() {
+  document.getElementById('cardsContainer').innerHTML = '<div class="loading-text">Loading...</div>';
+  const res = await callApi({action:'getAll'});
+  if (res && res.success) {
+    allData = res.data;
+    renderStats();
+    renderCards();
+  } else {
+    document.getElementById('cardsContainer').innerHTML = '<div class="empty">Error loading. Cuba refresh.</div>';
+  }
+}
+
+function renderStats() {
+  const counts = {CHECKING:0,EDITING:0,LISTED:0,SOLD:0,FLAGGED:0};
+  allData.forEach(d => { if(counts[d.Status] !== undefined) counts[d.Status]++; });
+  document.getElementById('statsBar').innerHTML = Object.entries(counts)
+    .map(([s,c]) => `<div class="stat-chip">${s} <b>${c}</b></div>`).join('');
+}
+
+function renderCards() {
+  const filtered = allData.filter(d => d.Status === currentTab);
+  const container = document.getElementById('cardsContainer');
+  if (filtered.length === 0) {
+    container.innerHTML = '<div class="empty">Tiada acc dalam stage ini</div>';
+    return;
+  }
+  container.innerHTML = filtered.map(acc => {
+    const hargaBeli = Number(acc['Harga Beli']) || 0;
+    const hargaJual = Number(acc['Harga Jual']) || 0;
+    const profit = hargaJual - hargaBeli;
+    const profitClass = profit >= 0 ? 'profit-pos' : 'profit-neg';
+    return `
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-email">${acc.Email || '-'}</div>
+          <div class="card-pass">${acc.Password || '-'}</div>
+        </div>
+        <span class="status-badge badge-${acc.Status}">${acc.Status}</span>
+      </div>
+      ${acc['Player List'] ? `<div class="card-players">${String(acc['Player List']).replace(/\n/g,'<br>')}</div>` : ''}
+      <div class="card-meta">
+        ${hargaBeli ? `<div class="meta-chip">Beli: <b>RM${hargaBeli}</b></div>` : ''}
+        ${hargaJual ? `<div class="meta-chip">Jual: <b>RM${hargaJual}</b></div>` : ''}
+        ${hargaJual ? `<div class="meta-chip ${profitClass}">Profit: <b>RM${profit}</b></div>` : ''}
+        ${acc.Seller ? `<div class="meta-chip">Seller: <b>${acc.Seller}</b></div>` : ''}
+        ${acc.Buyer ? `<div class="meta-chip">Buyer: <b>${acc.Buyer}</b></div>` : ''}
+        ${acc.Worker ? `<div class="meta-chip">Worker: <b>${acc.Worker}</b></div>` : ''}
+        ${acc.Tarikh ? `<div class="meta-chip"><b>${acc.Tarikh}</b></div>` : ''}
+      </div>
+      ${acc.Nota ? `<div class="card-nota">📝 ${acc.Nota}</div>` : ''}
+      <div class="card-actions">
+        <button class="btn btn-move" onclick="openMoveModal(${acc.row})">Move →</button>
+        <button class="btn btn-edit" onclick="openEditModal(${acc.row})">Edit</button>
+        <button class="btn btn-harga" onclick="openHargaModal(${acc.row})">💰 Harga</button>
+        ${acc.Status !== 'FLAGGED' ? `<button class="btn btn-flag" onclick="confirmMove('FLAGGED',${acc.row})">🚩</button>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function switchTab(status) {
+  currentTab = status;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelector(`.tab[data-status="${status}"]`).classList.add('active');
+  renderCards();
+}
+
+function openAddModal() {
+  editingRow = null;
+  document.getElementById('modalTitle').textContent = 'Tambah Acc';
+  document.getElementById('fEmail').value = '';
+  document.getElementById('fPass').value = 'mahal12345';
+  document.getElementById('fPlayers').value = '';
+  document.getElementById('fHargaBeli').value = '';
+  document.getElementById('fSeller').value = '';
+  document.getElementById('fWorker').value = '';
+  document.getElementById('fNota').value = '';
+  document.getElementById('modalOverlay').classList.remove('hidden');
+}
+
+function openEditModal(row) {
+  const acc = allData.find(d => d.row === row);
+  if (!acc) return;
+  editingRow = row;
+  document.getElementById('modalTitle').textContent = 'Edit Acc';
+  document.getElementById('fEmail').value = acc.Email || '';
+  document.getElementById('fPass').value = acc.Password || '';
+  document.getElementById('fPlayers').value = acc['Player List'] || '';
+  document.getElementById('fHargaBeli').value = acc['Harga Beli'] || '';
+  document.getElementById('fSeller').value = acc.Seller || '';
+  document.getElementById('fWorker').value = acc.Worker || '';
+  document.getElementById('fNota').value = acc.Nota || '';
+  document.getElementById('modalOverlay').classList.remove('hidden');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.add('hidden');
+}
+
+async function submitAcc() {
+  const data = {
+    'Email': document.getElementById('fEmail').value,
+    'Password': document.getElementById('fPass').value,
+    'Player List': document.getElementById('fPlayers').value,
+    'Harga Beli': parseFloat(document.getElementById('fHargaBeli').value) || 0,
+    'Seller': document.getElementById('fSeller').value,
+    'Worker': document.getElementById('fWorker').value,
+    'Nota': document.getElementById('fNota').value,
+    'Status': currentTab
+  };
+  const btn = document.getElementById('submitBtn');
+  btn.textContent = 'Saving...';
+  btn.disabled = true;
+  let res;
+  if (editingRow) {
+    res = await callApi({action:'updateAcc', row:editingRow, data});
+  } else {
+    res = await callApi({action:'addAcc', data});
+  }
+  btn.textContent = 'Simpan';
+  btn.disabled = false;
+  if (res && res.success) {
+    closeModal();
+    loadData();
+  } else {
+    alert('Error: ' + (res ? res.error : 'Unknown'));
+  }
+}
+
+function openHargaModal(row) {
+  hargaRow = row;
+  document.getElementById('fHargaJual').value = '';
+  document.getElementById('fAdminPass').value = '';
+  document.getElementById('hargaModalOverlay').classList.remove('hidden');
+}
+
+function closeHargaModal() {
+  document.getElementById('hargaModalOverlay').classList.add('hidden');
+}
+
+async function submitHargaJual() {
+  const harga = parseFloat(document.getElementById('fHargaJual').value) || 0;
+  const adminPass = document.getElementById('fAdminPass').value;
+  const res = await callApi({action:'setHargaJual', row:hargaRow, harga, adminPass});
+  if (res && res.success) {
+    closeHargaModal();
+    loadData();
+  } else {
+    alert((res && res.error) ? res.error : 'Error!');
+  }
+}
+
+function openMoveModal(row) {
+  movingRow = row;
+  document.getElementById('moveModalOverlay').classList.remove('hidden');
+}
+
+function closeMoveModal() {
+  document.getElementById('moveModalOverlay').classList.add('hidden');
+}
+
+async function confirmMove(status, row) {
+  const targetRow = row || movingRow;
+  if (!targetRow) return;
+  const res = await callApi({action:'moveStatus', row:targetRow, status});
+  closeMoveModal();
+  if (res && res.success) loadData();
+  else alert('Error: ' + (res ? res.error : 'Unknown'));
+}
+
+loadData();
+</script>
+</body>
+</html>
